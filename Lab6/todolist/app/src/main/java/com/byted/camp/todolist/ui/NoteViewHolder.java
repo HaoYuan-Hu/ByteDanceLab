@@ -8,7 +8,9 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.byted.camp.todolist.MainActivity;
 import com.byted.camp.todolist.NoteOperator;
 import com.byted.camp.todolist.R;
 import com.byted.camp.todolist.beans.Note;
@@ -52,10 +54,25 @@ public class NoteViewHolder extends RecyclerView.ViewHolder {
                 operator.updateNote(note);
             }
         });
+
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 operator.deleteNote(note);
+            }
+        });
+
+        // TODO 3：增加长按修改
+        contentText.setOnLongClickListener(new View.OnLongClickListener(){
+            @Override
+            public boolean onLongClick(View v) {
+                if (note.getState() == State.DONE) {
+                    Toast.makeText(v.getContext(),"无法修改已经完成的事项",Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    operator.changeContentNote(note, v);
+                }
+                return true;
             }
         });
 

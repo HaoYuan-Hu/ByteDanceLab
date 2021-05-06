@@ -2,7 +2,9 @@ package com.byted.camp.todolist;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.byted.camp.todolist.beans.Note;
 import com.byted.camp.todolist.beans.Priority;
@@ -33,6 +36,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_ADD = 1002;
+    private static final int REQUEST_CODE_UPDATE = 1001;
 
     private RecyclerView recyclerView;
     private NoteListAdapter notesAdapter;
@@ -44,6 +48,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // TODO 1：完成了每次进入 APP 时标题的更新
+        // 获取标题
+        SharedPreferences mainActivityTitleSp = this.getSharedPreferences( "MainActivityTitle", Context.MODE_PRIVATE );
+        int clickTimes = mainActivityTitleSp.getInt( "ClickTimes", 0);
+
+        // 设置标题
+        setTitle("Todo List " + String.valueOf(clickTimes));
+
+        // 更新标题
+        SharedPreferences.Editor editor = mainActivityTitleSp.edit();
+        editor.putInt( "ClickTimes", clickTimes + 1);
+        editor.commit();
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -75,7 +93,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void updateNote(Note note) {
-                MainActivity.this.updateNode(note);
+                MainActivity.this.updateNote(note);
+            }
+
+            @Override
+            public void changeContentNote(Note note,View v) {
+                MainActivity.this.changeContentNote(note, v);
             }
         });
         recyclerView.setAdapter(notesAdapter);
@@ -117,7 +140,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        // 如果是从 NodeActiity 的增加回来，并且结果返回成功了，那么刷新当前页面
         if (requestCode == REQUEST_CODE_ADD
+                && resultCode == Activity.RESULT_OK) {
+            notesAdapter.refresh(loadNotesFromDatabase());
+        }
+
+        // 如果是从 NodeActivity 的更新回来，并且结果成功了，那么也是刷新当前页面
+        if (requestCode == REQUEST_CODE_UPDATE
                 && resultCode == Activity.RESULT_OK) {
             notesAdapter.refresh(loadNotesFromDatabase());
         }
@@ -135,6 +165,8 @@ public class MainActivity extends AppCompatActivity {
                     null, null,
                     TodoNote.COLUMN_PRIORITY + " DESC");
 
+
+            // 用 cursor 遍历数据库表格，一个个返回数据
             while (cursor.moveToNext()) {
                 long id = cursor.getLong(cursor.getColumnIndex(TodoNote._ID));
                 String content = cursor.getString(cursor.getColumnIndex(TodoNote.COLUMN_CONTENT));
@@ -165,12 +197,14 @@ public class MainActivity extends AppCompatActivity {
         int rows = database.delete(TodoNote.TABLE_NAME,
                 TodoNote._ID + "=?",
                 new String[]{String.valueOf(note.id)});
+        // 如果删除的数量大于 1，则刷新
         if (rows > 0) {
             notesAdapter.refresh(loadNotesFromDatabase());
         }
     }
 
-    private void updateNode(Note note) {
+
+    private void updateNote(Note note) {
         if (database == null) {
             return;
         }
@@ -185,4 +219,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //TODO 2: 增加长按修改
+    private void changeContentNote(Note note,View v) {
+        if (database == null) {
+            return;
+        }
+
+        Toast.makeText(MainActivity.this,"触发长按，开始修改",Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(this, NoteActivity.class);
+        intent.putExtra("noteId", note.id);
+        intent.putExtra("noteContent", note.getContent());
+        intent.putExtra("notePriority", note.getPriority().intValue);
+
+        startActivityForResult(intent, REQUEST_CODE_UPDATE);
+    }
 }
