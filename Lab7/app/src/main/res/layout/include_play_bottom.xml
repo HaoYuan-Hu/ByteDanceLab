@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:orientation="horizontal"
+    android:background="@color/black"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/restart_btn"
+        android:src="@drawable/restart"
+        android:layout_width="50px"
+        android:layout_height="50px"
+        android:layout_marginRight="50px"/>
+    <ImageView
+        android:id="@+id/control_btn"
+        android:src="@drawable/pause"
+        android:layout_width="100px"
+        android:layout_height="100px"
+        android:layout_marginRight="50px"/>
+    <SeekBar
+        android:id="@+id/seek_bar"
+        android:layout_toRightOf="@+id/video_time"
+        android:layout_toLeftOf="@+id/start_btn"
+        android:layout_centerVertical="true"
+        android:layout_width="500px"
+        android:layout_height="wrap_content"
+        android:outlineAmbientShadowColor="@color/white"/>
+
+    <TextView
+        android:id="@+id/video_time"
+        android:text="00:00/00:00"
+        android:layout_centerVertical="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"/>
+</LinearLayout>
