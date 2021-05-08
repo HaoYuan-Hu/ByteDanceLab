@@ -18,6 +18,7 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.io.File;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,10 +42,12 @@ public class SystemRecordActivity extends AppCompatActivity {
         mVideoView = findViewById(R.id.videoview);
     }
 
+    // 和 拍摄 按钮绑定
     public void record(View view) {
         requestPermission();
     }
 
+    // 请求相机和音频权限
     private void requestPermission() {
         boolean hasCameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         boolean hasAudioPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
@@ -63,6 +66,7 @@ public class SystemRecordActivity extends AppCompatActivity {
 
     }
 
+    // 开始拍摄
     private void recordVideo() {
         Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         mp4Path = getOutputMediaPath();
@@ -70,9 +74,11 @@ public class SystemRecordActivity extends AppCompatActivity {
         intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY,1);
         if (intent.resolveActivity(getPackageManager()) != null) {
             // todo
+            startActivityForResult(intent,REQUEST_CODE_RECORD);
         }
     }
 
+    // 获取拍摄文件目录
     private String getOutputMediaPath() {
         File mediaStorageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -104,6 +110,9 @@ public class SystemRecordActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         // todo
+        if (requestCode == REQUEST_CODE_RECORD && resultCode == RESULT_OK) {
+            play();
+        }
     }
 
     private void play() {

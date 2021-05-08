@@ -11,6 +11,7 @@ import android.media.ExifInterface;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -47,14 +48,17 @@ public class SystemCameraActivity extends AppCompatActivity {
         imageView = findViewById(R.id.iv_img);
     }
 
+    // 与 拍摄按钮 绑定
     public void takePhoto(View view) {
         requestCameraPermission();
     }
 
+    // 与 拍摄（指定路径）按钮 绑定
     public void takePhotoUsePath(View view) {
         requestCameraAndSDCardPermission();
     }
 
+    // 请求相机和 SD 卡权限
     private void requestCameraAndSDCardPermission() {
         boolean hasCameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         if (hasCameraPermission) {
@@ -65,6 +69,7 @@ public class SystemCameraActivity extends AppCompatActivity {
         }
     }
 
+    // 将照片放到指定路径下
     private void takePhotoUsePathHasPermission() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         takeImagePath = getOutputMediaPath();
@@ -74,16 +79,31 @@ public class SystemCameraActivity extends AppCompatActivity {
         }
     }
 
+    // 获取照片存储的指定路径
     private String getOutputMediaPath() {
+        // 获取应用文件存储路径
         File mediaStorageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+        // 获取当前时间
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
+        // 新建一个文件
         File mediaFile = new File(mediaStorageDir, "IMG_" + timeStamp + ".jpg");
+
+        // 如果文件不存在，则创建
         if (!mediaFile.exists()) {
             mediaFile.getParentFile().mkdirs();
         }
+
+        Toast.makeText(SystemCameraActivity.this,"mediaFile:" + mediaFile.getAbsolutePath(),Toast.LENGTH_SHORT);
+        Log.d("SystemCameraActivity","mediaFile:" + mediaFile.getAbsolutePath());
+
+
+        // 返回文件的绝对路径
         return mediaFile.getAbsolutePath();
     }
 
+    // 获取相机权限，如果已有权限，则拍摄照片
     private void requestCameraPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             String[] permissions = new String[]{Manifest.permission.CAMERA};
@@ -93,8 +113,11 @@ public class SystemCameraActivity extends AppCompatActivity {
         }
     }
 
+    // 开启一个拍摄 Activity
     private void takePhotoHasPermission() {
         // todo
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(takePictureIntent,REQUEST_CODE_TAKE_PHOTO);
     }
 
     @Override
@@ -127,10 +150,30 @@ public class SystemCameraActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_TAKE_PHOTO && resultCode == RESULT_OK) {
             // todo
+            Bundle extras = data.getExtras();
+            Bitmap imageBitmap = (Bitmap)extras.get("data");
+            imageView.setImageBitmap(imageBitmap);
         } else if (requestCode == REQUEST_CODE_TAKE_PHOTO_PATH && resultCode == RESULT_OK) {
             // todo
+            // view 的宽高
+            int targetW = imageView.getWidth();
+            int targetH = imageView.getHeight();
+
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+//            BitmapFactory.decodeFile(takeImagePath, bmOptions);
+
+            // photo 的宽高
+            int photoW = bmOptions.outWidth;
+            int photoH = bmOptions.outHeight;
+
+            int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inSampleSize = scaleFactor;
+
+            Bitmap bitmap = BitmapFactory.decodeFile(takeImagePath, bmOptions);
+            Bitmap rotateBitmap = PathUtils.rotateImage(bitmap,takeImagePath);
+            imageView.setImageBitmap(rotateBitmap);
         }
     }
-
-
 }

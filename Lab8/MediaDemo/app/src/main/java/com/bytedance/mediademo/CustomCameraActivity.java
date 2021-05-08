@@ -36,7 +36,7 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
     private Button mRecordButton;
     private boolean isRecording = false;
 
-    private String mp4Path = "";
+    private String mp4Path = ""; // 拍摄视频存储路径
 
     public static void startUI(Context context) {
         Intent intent = new Intent(context, CustomCameraActivity.class);
@@ -61,13 +61,15 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
         mCamera = Camera.open();
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setPictureFormat(ImageFormat.JPEG);
-        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+        //
+//        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         parameters.set("orientation", "portrait");
         parameters.set("rotation", 90);
         mCamera.setParameters(parameters);
         mCamera.setDisplayOrientation(90);
     }
 
+    // 预览拍摄界面
     private boolean prepareVideoRecorder() {
         mMediaRecorder = new MediaRecorder();
 
@@ -77,6 +79,8 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
 
         // Step 2: Set sources
         // todo
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
@@ -102,8 +106,14 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
         return true;
     }
 
+    // 结束录制
     private void releaseMediaRecorder() {
         // todo
+        mMediaRecorder.stop();
+        mMediaRecorder.reset();
+        mMediaRecorder.release();
+        mMediaRecorder = null;
+        mCamera.lock();
     }
 
     private String getOutputMediaPath() {
@@ -120,7 +130,7 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
         mCamera.takePicture(null, null, mPictureCallback);
     }
 
-    //获取照片中的接口回调
+    // 获取照片中的接口回调
     Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
@@ -187,6 +197,12 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         // todo
+        try {
+            mCamera.setPreviewDisplay(holder);
+            mCamera.startPreview();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -194,9 +210,9 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
         if (holder.getSurface() == null) {
             return;
         }
-        //停止预览效果
+        // 停止预览效果
         mCamera.stopPreview();
-        //重新设置预览效果
+        // 重新设置预览效果
         try {
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
@@ -208,6 +224,9 @@ public class CustomCameraActivity extends AppCompatActivity implements SurfaceHo
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         // todo
+        mCamera.stopPreview();
+        mCamera.release();
+        mCamera = null;
     }
 
     @Override

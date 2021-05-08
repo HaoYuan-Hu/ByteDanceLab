@@ -24,15 +24,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
+    // 和 系统拍摄按钮 绑定
     public void systemTakePicture(View view) {
         SystemCameraActivity.startUI(this);
 //        TestActivity.startUI(this);
     }
 
+    // 和 系统录制按钮 绑定
     public void systemRecord(View view) {
         SystemRecordActivity.startUI(this);
     }
 
+    // 和 自定义相机按钮 绑定
     public void customCamera(View view) {
         requestPermission();
     }
@@ -41,13 +44,19 @@ public class MainActivity extends AppCompatActivity {
         CustomCameraActivity.startUI(this);
     }
 
+    // 自定义相机 首先要获取权限
     private void requestPermission() {
+        // 检查音视频权限
         boolean hasCameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         boolean hasAudioPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+
+        // 如果权限都齐全，则开始录制
         if (hasCameraPermission && hasAudioPermission) {
             recordVideo();
         } else {
             List<String> permission = new ArrayList<String>();
+
+            // 查查成分，少啥补啥
             if (!hasCameraPermission) {
                 permission.add(Manifest.permission.CAMERA);
             }
@@ -64,11 +73,13 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         boolean hasPermission = true;
         for (int grantResult : grantResults) {
+            // 如果发现未授予权限的，则直接返回错误
             if (grantResult != PackageManager.PERMISSION_GRANTED) {
                 hasPermission = false;
                 break;
             }
         }
+        // 如果权限都通过了，则可以开始录制了
         if (hasPermission) {
             recordVideo();
         } else {
